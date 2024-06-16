@@ -14,12 +14,9 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 CRGB leds[NUM_LEDS];
 
 // Button variables
-int ON_BTN_PIN = 2
-int CLIMATE_BTN_PIN = 12
-int SOIL_BTN_PIN = 8
-int HOME_BTN_PIN = 4
+int ON_BTN_PIN = 2 int CLIMATE_BTN_PIN = 12 int SOIL_BTN_PIN = 8 int HOME_BTN_PIN = 4
 
-int pins[] = { ON_BTN_PIN, CLIMATE_BTN_PIN, SOIL_BTN_PIN, HOME_BTN_PIN }
+  int pins[] = { ON_BTN_PIN, CLIMATE_BTN_PIN, SOIL_BTN_PIN, HOME_BTN_PIN }
 
 // Temp/Humid Sensor Variables
 #define DHTPIN 3
@@ -35,10 +32,10 @@ DHT dht(DHTPIN, DHTTYPE);
 enum State {
   OFF,
   ON,
-  DISPLAY_CLIMATE,         // Climate of plant i.e. temp and humid
-  DISPLAY_SOIL_INFO,       // Soil moisture and light percent
-  DISPLAY_WATER_DISPENSE,  // "Dispensing water..."
-  DISPLAY_PLANT            // Plant name, mood i.e. "Good!", "Alright", etc...
+  DISPLAY_CLIMATE,    // Climate of plant i.e. temp and humid
+  DISPLAY_SOIL_INFO,  // Soil moisture and light percent
+  DISPENSE_WATER,     // "Dispensing water..."
+  DISPLAY_HOME        // Plant name, mood i.e. "Good!", "Alright", etc...
 };
 
 State machineState = ON;
@@ -72,7 +69,6 @@ void setup() {
   FastLED.setBrightness(BRIGHTNESS);
   fill_solid(leds, NUM_LEDS, CRGB::Black);
   FastLED.show();
-
 }
 
 void loop() {
@@ -81,63 +77,36 @@ void loop() {
 }
 
 void handleMachineState() {
+  // If a button is pressed...
   if (debounceButton()) {
     changeState();
-    transition();
   }
-}
-
-void transisiton() {
-  switch (machineState) {
-    case OFF: 
-      if (currentBtn == ON_BTN_PIN) {
-        machineState = ON;
-      }
-      break;
-    case ON:
-      if (currentBtn == ON_BTN_PIN) {
-        machineState = OFF;
-      }
-      if (currentBtn == ON_BTN_PIN) {
-        machineState = OFF;
-      }
-      if (currentBtn == ON_BTN_PIN) {
-        machineState = OFF;
-      }
-      if (currentBtn == ON_BTN_PIN) {
-        machineState = OFF;
-      }
-      if (currentBtn == ON_BTN_PIN) {
-        machineState = OFF;
-      }
-      break;
-    case DISPLAY_CLIMATE:
-      if (currentBtn == SOIL_BTN_PIN) {
-        machineState = DISPLAY_CLIMATE;
-      }
-      break;
-  }
-  if (machineState == OFF) {
-      machineState = ON;
-    } else if (machineState == ON) {
-      machineState = OFF;
-    } else if (machineState == ) {
-      machineState = OFF;
-    } else if (machineState == ON) {
-      machineState = OFF;
-    }
 }
 
 void changeState() {
   switch (currentBtn) {
-    case 
+    case ON_BTN_PIN:
+      if (machineState == OFF) machineState = ON;
+      if (machineState == ON) machineState = OFF;
+      break;
+    case CLIMATE_BTN_PIN:
+      if (machineState != OFF) machineState = DISPLAY_CLIMATE;
+      break;
+    case SOIL_BTN_PIN:
+      if (machineState != OFF) machineState = DISPLAY_SOIL_INFO;
+      break;
+    case HOME_BTN_PIN:
+      if (machineState != OFF) machineState = DISPLAY_HOME;
+      break;
+    // case WATER_BTN_PIN:
+    //   if (machineState != OFF) machineState = DISPENSE_WATER;
+    //   break;
   }
 }
 
 void stateAction() {
   switch (machineState) {
     case OFF:
-
   }
 }
 
