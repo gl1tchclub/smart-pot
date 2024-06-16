@@ -81,6 +81,7 @@ void loop() {
 
 void handleMachineState() {
   if (debounceButton()) {
+    pressedButton();
     transition();
   }
 }
@@ -88,7 +89,7 @@ void handleMachineState() {
 void transisiton() {
   switch (machineState) {
     case OFF: 
-
+      if (currentBtn == )
   }
   if (machineState == OFF) {
       machineState = ON;
