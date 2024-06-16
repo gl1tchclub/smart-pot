@@ -83,24 +83,30 @@ void handleMachineState() {
   }
 }
 
+// Change machine state depending on button press
 void changeState() {
-  switch (currentBtn) {
-    case ON_BTN_PIN:
-      if (machineState == OFF) machineState = ON;
-      if (machineState == ON) machineState = OFF;
-      break;
-    case CLIMATE_BTN_PIN:
-      if (machineState != OFF) machineState = DISPLAY_CLIMATE;
-      break;
-    case SOIL_BTN_PIN:
-      if (machineState != OFF) machineState = DISPLAY_SOIL_INFO;
-      break;
-    case HOME_BTN_PIN:
-      if (machineState != OFF) machineState = DISPLAY_HOME;
-      break;
-    // case WATER_BTN_PIN:
-    //   if (machineState != OFF) machineState = DISPENSE_WATER;
-    //   break;
+  if (machineState != OFF) {
+    switch (currentBtn) {
+      case ON_BTN_PIN:
+        if (machineState == OFF) {
+          machineState = ON;
+        } else {
+          machineState = OFF;
+        }
+        break;
+      case CLIMATE_BTN_PIN:
+        machineState = DISPLAY_CLIMATE;
+        break;
+      case SOIL_BTN_PIN:
+        machineState = DISPLAY_SOIL_INFO;
+        break;
+      case HOME_BTN_PIN:
+        machineState = DISPLAY_HOME;
+        break;
+        // case WATER_BTN_PIN:
+        //   machineState = DISPENSE_WATER;
+        //   break;
+    }
   }
 }
 
