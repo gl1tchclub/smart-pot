@@ -14,11 +14,12 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 CRGB leds[NUM_LEDS];
 
 // Button variables
-int ON_BTN_PIN 2
-int CLIMATE_BTN_PIN 12
-int MOIST_BTN_PIN 8
+int ON_BTN_PIN = 2
+int CLIMATE_BTN_PIN = 12
+int SOIL_BTN_PIN = 8
+int HOME_BTN_PIN = 4
 
-int pins[] = {ON_BTN_PIN, CLIMATE_BTN_PIN, MOIST_BTN_PIN}
+int pins[] = { ON_BTN_PIN, CLIMATE_BTN_PIN, SOIL_BTN_PIN, HOME_BTN_PIN }
 
 // Temp/Humid Sensor Variables
 #define DHTPIN 3
@@ -61,7 +62,7 @@ void setup() {
   }
 
   // Init moisture sensor
-  pinMode(MOIST_SENS_PIN, INPUT);
+  pinMode(SOIL_SENS_PIN, INPUT);
 
   // Init DHT11 sens
   dht.begin();
@@ -81,7 +82,7 @@ void loop() {
 
 void handleMachineState() {
   if (debounceButton()) {
-    pressedButton();
+    changeState();
     transition();
   }
 }
@@ -89,7 +90,32 @@ void handleMachineState() {
 void transisiton() {
   switch (machineState) {
     case OFF: 
-      if (currentBtn == )
+      if (currentBtn == ON_BTN_PIN) {
+        machineState = ON;
+      }
+      break;
+    case ON:
+      if (currentBtn == ON_BTN_PIN) {
+        machineState = OFF;
+      }
+      if (currentBtn == ON_BTN_PIN) {
+        machineState = OFF;
+      }
+      if (currentBtn == ON_BTN_PIN) {
+        machineState = OFF;
+      }
+      if (currentBtn == ON_BTN_PIN) {
+        machineState = OFF;
+      }
+      if (currentBtn == ON_BTN_PIN) {
+        machineState = OFF;
+      }
+      break;
+    case DISPLAY_CLIMATE:
+      if (currentBtn == SOIL_BTN_PIN) {
+        machineState = DISPLAY_CLIMATE;
+      }
+      break;
   }
   if (machineState == OFF) {
       machineState = ON;
@@ -102,6 +128,12 @@ void transisiton() {
     }
 }
 
+void changeState() {
+  switch (currentBtn) {
+    case 
+  }
+}
+
 void stateAction() {
   switch (machineState) {
     case OFF:
@@ -109,17 +141,18 @@ void stateAction() {
   }
 }
 
-// Delay button/state change by .5 seconds to count for button noise, change state if any button has been pressed
+// Delay button/state change by .5 seconds to count for button noise, return if any button has been pressed
 bool debounceButton() {
   static int lastButtonState = 0;  // Initialize to 1 to detect falling edge
   static unsigned long lastDebounceTime = 0;
   const unsigned long debounceDelay = 50;  // milliseconds
   int reading = 0;
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 4; i++) {
     reading = digitalRead(pins[i]);
     if (reading == HIGH) {
       currentBtn = pins[i];
+      break;
     }
   }
 
