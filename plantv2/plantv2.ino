@@ -85,14 +85,11 @@ void handleMachineState() {
 
 // Change machine state depending on button press
 void changeState() {
+  // if machine state is not off, then allow user functionality
   if (machineState != OFF) {
     switch (currentBtn) {
       case ON_BTN_PIN:
-        if (machineState == OFF) {
-          machineState = ON;
-        } else {
-          machineState = OFF;
-        }
+        machineState = OFF;
         break;
       case CLIMATE_BTN_PIN:
         machineState = DISPLAY_CLIMATE;
@@ -107,6 +104,10 @@ void changeState() {
         //   machineState = DISPENSE_WATER;
         //   break;
     }
+  }
+  //if machine state is off, then turn on
+  else if (machineState == OFF && currentBtn == ON_BTN_PIN) {
+    machineState = ON;
   }
 }
 
