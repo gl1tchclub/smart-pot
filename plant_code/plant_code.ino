@@ -27,7 +27,9 @@ DHT dht(DHTPIN, DHTTYPE);
 #define MOIST_SENS_PIN A0
 #define MOIST_THRESHOLD 530
 
+int pins[] = {ON_BTN_PIN, CLIMATE_BTN_PIN, MOIST_BTN_PIN, MOIST_SENS_PIN}
 
+// All possible machine states
 enum State {
   OFF,
   ON,
@@ -38,13 +40,19 @@ enum State {
 };
 
 State machineState = ON;
+
+// Compare climate differences for debouncing
 float currentTemp = 0;
 float currentHumid = 0;
 static float lastTemp = 0;
 static float lastHumid = 0;
+
+// Measure overall status overtime
 static int moisture = 25;
+static int temperature = 25;
+static int humidity = 25;
 static int light = 25;
-static int happiness = moisture + light + (int)lastTemp + (int)lastHumid;
+static int happiness = moisture + light + temperature + humidity;
 
 void setup() {
   Serial.begin(9600);
