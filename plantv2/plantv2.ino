@@ -80,11 +80,13 @@ void handleMachineState() {
   // If a button is pressed...
   if (debounceButton()) {
     changeState();
+    stateAction();
   }
 }
 
 // Change machine state depending on button press
 void changeState() {
+
   // if machine state is not off, then allow user functionality
   if (machineState != OFF) {
     switch (currentBtn) {
@@ -105,7 +107,8 @@ void changeState() {
         //   break;
     }
   }
-  //if machine state is off, then turn on
+
+  //if machine state is off and on btn pressed, then turn on
   else if (machineState == OFF && currentBtn == ON_BTN_PIN) {
     machineState = ON;
   }
@@ -114,6 +117,14 @@ void changeState() {
 void stateAction() {
   switch (machineState) {
     case OFF:
+      turnOffScreen();
+  }
+}
+
+void turnOffScreen() {
+  switch (machineState) {
+    case OFF:
+
   }
 }
 
