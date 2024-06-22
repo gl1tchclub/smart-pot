@@ -1,5 +1,0 @@
-on/off = 2
-soil = 8
-climate = 12
-home = 4
-water = 9
