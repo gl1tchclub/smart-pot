@@ -14,10 +14,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Use the CORS module
-app.use(cors()); // Make sure this is declared before the routes
-
-// Use the routes module
-app.use("/", indexRoutes);
+app.use(cors()); 
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json()); 
+app.use("/api/plants", indexRoutes);
 
 // Start the server on port 3000
 app.listen(PORT, () => {

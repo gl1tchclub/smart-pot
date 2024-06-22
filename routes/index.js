@@ -1,14 +1,17 @@
-// Import the Express module
 import express from "express";
 
-// Import the index controllers module
-import { get } from "../controllers/index.js";
+import {
+  createPlant,
+  getPlants,
+  getPlant,
+  deletePlant,
+} from "../controllers/plant.js";
 
-// Create an Express router
 const router = express.Router();
 
-// Create a GET route
-router.get("/", get);
+router.post("/select", createPlant);
+router.get("/all", getPlants);
+router.get("/plant/:id", getPlant);
+router.delete("/delete/:id", deletePlant);
 
-// Export the router
 export default router;
