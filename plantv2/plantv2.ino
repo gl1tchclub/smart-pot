@@ -77,8 +77,6 @@ void setup() {
   FastLED.show();
 
   turnOn();
-  currentColor = Green;
-  changeLed();
 }
 
 void loop() {
@@ -136,6 +134,8 @@ void stateAction() {
       break;
     case ON:
       turnOn();
+      machineState = DISPLAY_HOME;
+      home();
       break;
     case DISPLAY_CLIMATE:
       displayClimate();
@@ -174,7 +174,26 @@ void turnOn() {
   lcd.clear();
   lcd.setCursor(2, 0);
   lcd.print("Turning On...");
+  fill_solid(leds, NUM_LEDS, CRGB::Green);
+  FastLED.show();
   delay(1000);
+  home();
+}
+
+bool readingBuffer() {
+  unsigned long currentCheckTime = millis();
+  static unsigned long lastCheckTime = 0;
+
+  // If 5 seconds have passed...
+  if (currentCheckTime >= (lastCheckTime + 5000)) {
+    // Change last time
+    lastCheckTime = currentCheckTime;
+    // Return true to indicate a change in readings
+    return true;
+  }
+
+  // Return false if there's no change in readings
+  return false;
 }
 
 // Delay button/state change by .5 seconds to count for button noise, return if any button has been pressed
