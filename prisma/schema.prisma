@@ -7,6 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                  Int         @id @default(autoincrement())
+  username            String      @unique
+  password            String
+  plant               Plant[]
+}
+
 model Plant {
   id              Int         @id @default(autoincrement())
   name            String      @unique
@@ -14,5 +21,7 @@ model Plant {
   threshold       Int
   temp            Int
   indoor          Boolean
-  updatedAt       DateTime     @updatedAt
+  updatedAt       DateTime    @updatedAt
+  userId          Int
+  user            User        @relation(fields: [userId], references: [id])
 }

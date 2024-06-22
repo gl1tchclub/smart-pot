@@ -10,6 +10,16 @@ const createPlant = async (req, res) => {
         msg: "Invalid Content-Type. Expected application/json.",
       });
     }
+
+    const { name, daysWater, threshold }
+
+    await prisma.plant.create({
+        data: {
+          name: req.body.name,
+          institutionId: req.body.institutionId,
+        },
+      });
+
   } catch (error) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
       {
