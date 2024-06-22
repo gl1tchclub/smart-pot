@@ -106,8 +106,8 @@ void handleMachineState() {
       readSoil();
       readClimate();
       stateAction();
+      changeLed();
     }
-    changeLed();
   }
 
   // If a button is pressed, change state and do something
@@ -187,6 +187,7 @@ void dispense() {
   lcd.clear();
   lcd.home();
   lcd.print("Watering...");
+  fill_solid(soilLeds, NUM_LEDS, CRGB::Blue);
   int reading = 0;
   // Low moisture
   if (currentMoist <= 60) {
