@@ -25,15 +25,15 @@ const createPlant = async (req, res) => {
 
 const getPlants = async (req, res) => {
   try {
-    const institutions = await prisma.institution.findMany();
+    const plants = await prisma.plant.findMany();
 
-    // Check if there are no institutions
-    if (!institutions) {
-      return res.status(404).json({ msg: "No institutions found" });
+    // Check if there are no plants
+    if (!plants) {
+      return res.status(404).json({ msg: "No plants found" });
     }
 
     return res.status(200).json({
-      data: institutions,
+      data: plants,
     });
   } catch (err) {
     return res.status(500).json({
@@ -44,19 +44,19 @@ const getPlants = async (req, res) => {
 
 const getPlant = async (req, res) => {
   try {
-    const institution = await prisma.institution.findUnique({
+    const plant = await prisma.plant.findUnique({
       where: { id: Number(req.params.id) },
     });
 
-    // Check if there is no institution
-    if (!institution) {
+    // Check if there is no plant
+    if (!plant) {
       return res
         .status(404)
-        .json({ msg: `No institution with the id: ${req.params.id} found` });
+        .json({ msg: `No plant with the id: ${req.params.id} found` });
     }
 
     return res.status(200).json({
-      data: institution,
+      data: plant,
     });
   } catch (err) {
     return res.status(500).json({
@@ -65,4 +65,30 @@ const getPlant = async (req, res) => {
   }
 };
 
-export { createPlant, getPlants, getPlant };
+const deletePlant = async (req, res) => {
+  try {
+    const plant = await prisma.plant.findUnique({
+      where: { id: Number(req.params.id) },
+    });
+
+    if (!plant) {
+      return res
+        .status(404)
+        .json({ msg: `No plant with the id: ${req.params.id} found` });
+    }
+
+    await prisma.plant.delete({
+      where: { id: Number(req.params.id) },
+    });
+
+    return res.json({
+      msg: `Plant with the id: ${req.params.id} successfully deleted`,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      msg: err.message,
+    });
+  }
+};
+
+export { createPlant, getPlants, getPlant, deletePlant };
