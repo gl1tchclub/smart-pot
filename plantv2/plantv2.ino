@@ -38,7 +38,7 @@ enum State {
   OFF,
   ON,
   DISPLAY_CLIMATE,    // Climate of plant i.e. temp and humid
-  DISPLAY_SOIL_INFO,  // Soil moisture and light percent
+  DISPLAY_SOIL_INFO,  // Soil moisture and water threshold
   DISPENSE_WATER,     // "Dispensing water..."
   DISPLAY_HOME        // Plant name, mood i.e. "Good!", "Alright", etc...
 };
@@ -94,7 +94,7 @@ void handleMachineState() {
   // If machine is on, always check soil/climate, and change LED
   if (machineState != OFF) {
     checkSoil();
-    checkClimate();
+    readClimate();
     changeLED();
   }
 }
@@ -138,7 +138,7 @@ void stateAction() {
       home();
       break;
     case DISPLAY_CLIMATE:
-      displayClimate();
+      readClimate();
       break;
     case DISPLAY_SOIL_INFO:
       displaySoil();
@@ -180,6 +180,60 @@ void turnOn() {
   home();
 }
 
+void displaySoil() {
+  if (readingBuffer()) {
+    lcd.clear();
+    lcd.setCursor(0, 0);  // set the cursor on the first row and column
+    lcd.print("Moisture: ");
+    lcd.print(moisture);  //print the water content
+    lcd.print("%");
+    lcd.setCursor(0, 1);  //set the cursor on the second row and first column
+    lcd.print("Threshold: ");
+    lcd.print(threshold);  //print the temperature
+    lcd.print("%");
+    delay(1000);
+  }
+}
+
+void displayClimate() {
+  if (readingBuffer()) {
+    lcd.clear();
+    lcd.setCursor(0, 0);  // set the cursor on the first row and column
+    lcd.print("Humidity: ");
+    lcd.print(currentHumid);  //print the humidity
+    lcd.print("%");
+    lcd.setCursor(0, 1);  //set the cursor on the second row and first column
+    lcd.print("Temp: ");
+    lcd.print(currentTemp);  //print the temperature
+    lcd.print((char)0b11011111);
+    lcd.print("C");
+    delay(1000);
+  }
+}
+
+bool readClimate() {
+  // Read current temperature and humidity from the sensor
+  currentTemp = (float)dht.readTemperature();
+  currentHumid = (float)dht.readHumidity();
+
+  // Check if readings are valid
+  if (isnan(currentTemp) || isnan(currentHumid)) {
+    Serial.println("Failed to read from DHT sensor!");
+    lcd.print("Failed");
+    return false;
+  }
+
+  // If the latest temperature or humidity differs from the previous readings...
+  if (currentTemp != lastTemp || lastHumid != currentHumid) {
+    // Update the last temperature and humidity readings
+    lastHumid = currentHumid;
+    lastTemp = currentTemp;
+    return true;
+  }
+
+  return false;
+}
+
 bool readingBuffer() {
   unsigned long currentCheckTime = millis();
   static unsigned long lastCheckTime = 0;
@@ -188,11 +242,11 @@ bool readingBuffer() {
   if (currentCheckTime >= (lastCheckTime + 5000)) {
     // Change last time
     lastCheckTime = currentCheckTime;
-    // Return true to indicate a change in readings
+    // Return true to indicate a 5 second passing
     return true;
   }
 
-  // Return false if there's no change in readings
+  // Return false if 5 seconds have not passed
   return false;
 }
 
