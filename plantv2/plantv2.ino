@@ -14,9 +14,13 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 CRGB leds[NUM_LEDS];
 
 // Button variables
-int ON_BTN_PIN = 2 int CLIMATE_BTN_PIN = 12 int SOIL_BTN_PIN = 8 int HOME_BTN_PIN = 4
+int ON_BTN_PIN = 2;
+int CLIMATE_BTN_PIN = 12; 
+int SOIL_BTN_PIN = 8;
+int HOME_BTN_PIN = 4;
+int WATER_BTN_PIN = 9;
 
-  int pins[] = { ON_BTN_PIN, CLIMATE_BTN_PIN, SOIL_BTN_PIN, HOME_BTN_PIN }
+int pins[] = { ON_BTN_PIN, CLIMATE_BTN_PIN, SOIL_BTN_PIN, HOME_BTN_PIN, WATER_BTN_PIN }
 
 // Temp/Humid Sensor Variables
 #define DHTPIN 3
@@ -77,10 +81,17 @@ void loop() {
 }
 
 void handleMachineState() {
-  // If a button is pressed...
+  // If a button is pressed, change state and do something
   if (debounceButton()) {
     changeState();
     stateAction();
+  }
+
+  // If machine is on, always check soil/climate, and change LED
+  if (machineState != OFF) {
+    checkSoil();
+    checkClimate();
+    changeLED();
   }
 }
 
@@ -153,7 +164,7 @@ bool debounceButton() {
   // If debounce delay has passed
   if (elapsedTime >= debounceDelay) {
     // Return true only if the button is pressed (reading is HIGH) AND If the current state is different from the last state
-    if (reading == HIGH && reading != lastButtonState) {
+    if (reading == HIGH && reading != lastButtonState) { // is  && reading != lastButtonState needed?
       lastButtonState = reading;
       return true;
     }
