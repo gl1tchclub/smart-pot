@@ -31,6 +31,11 @@ int pins[] = { ON_BTN_PIN, CLIMATE_BTN_PIN, SOIL_BTN_PIN, HOME_BTN_PIN, WATER_BT
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
+int MIN_TEMP 10;
+int MAX_TEMP 30;
+int MIN_HUMID 30;
+int MAX_HUMID 75;
+
 // Moisture sensor variables
 #define MOIST_SENS_PIN A0
 int MIN_MOIST 400;
@@ -218,6 +223,40 @@ void displayClimate() {
 }
 
 void changeLed() {
+
+  // Update moist color
+  if (currentMoist > MAX_MOIST) {
+    soilColor = CRGB::Purple
+  }
+  if (currentMoist <= MAX_MOIST && currentMoist > MIN_MOIST) {
+    soilColor = CRGB::Green
+  }
+  if (currentMoist < MIN_MOIST) {
+    soilColor = CRGB::Red
+  }
+
+  // Update temp color
+  if (currentTemp > MAX_TEMP) {
+    tempColor = CRGB::Purple
+  }
+  if (currentTemp <= MAX_TEMP && currentTemp > MIN_TEMP) {
+    tempColor = CRGB::Green
+  }
+  if (currentTemp < MIN_TEMP) {
+    tempColor = CRGB::Red
+  }
+
+  // Update humid color
+  if (currentHumid > MAX_HUMID) {
+    humidColor = CRGB::Purple
+  }
+  if (currentHumid <= MAX_HUMID && currentHumid > MIN_HUMID) {
+    humidColor = CRGB::Green
+  }
+  if (currentHumid < MIN_HUMID) {
+    humidColor = CRGB::Red
+  }
+
   leds[0] = soilColor;
   leds[1] = soilColor;
   leds[2] = humidColor;
@@ -242,15 +281,7 @@ bool readSoil() {
     // Update the last moisture readings
     lastMoist = currentMoist;
 
-    // Update soil color
-    if (currentMoist > MAX_MOIST) {
-      soilColor = CRGB::Purple
-    }
-    if (currentMoist <= MAX_MOIST && currentMoist > MIN_MOIST) {
-      soilColor = CRGB::Green
-    } else {
-      soilColor = CRGB::Red
-    }
+
     return true;
   }
 
