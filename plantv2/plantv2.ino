@@ -13,9 +13,9 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 
-#define soilColor CRGB::Green
-#define tempColor CRGB::Green
-#define humidColor CRGB::Green
+CRGB soilColor = CRGB::Green;
+CRGB tempColor = CRGB::Green;
+CRGB humidColor = CRGB::Green;
 
 // Button variables
 int ON_BTN_PIN = 2;
@@ -24,33 +24,33 @@ int SOIL_BTN_PIN = 8;
 int HOME_BTN_PIN = 4;
 int WATER_BTN_PIN = 9;
 
-int pins[] = { ON_BTN_PIN, CLIMATE_BTN_PIN, SOIL_BTN_PIN, HOME_BTN_PIN, WATER_BTN_PIN }
+int pins[] = { ON_BTN_PIN, CLIMATE_BTN_PIN, SOIL_BTN_PIN, HOME_BTN_PIN, WATER_BTN_PIN };
 
 // Temp/Humid Sensor Variables
 #define DHTPIN 3
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
-float MIN_TEMP 10;
-float MAX_TEMP 30;
-float MIN_HUMID 30;
-float MAX_HUMID 75;
+float MIN_TEMP = 10.00;
+float MAX_TEMP = 30.00;
+float MIN_HUMID = 25.00;
+float MAX_HUMID = 75.00;
 
 // Moisture sensor variables
 #define MOIST_SENS_PIN A0
-int MIN_MOIST 400;
-int MAX_MOIST 700
+int MIN_MOIST = 30;
+int MAX_MOIST = 75;
 
 
-  // All possible machine states
-  enum State {
-    OFF,
-    ON,
-    DISPLAY_CLIMATE,    // Climate of plant i.e. temp and humid
-    DISPLAY_SOIL_INFO,  // Soil moisture and water threshold
-    DISPENSE_WATER,     // "Dispensing water..."
-    DISPLAY_HOME        // Plant name, mood i.e. "Good!", "Alright", etc...
-  };
+// All possible machine states
+enum State {
+  OFF,
+  ON,
+  DISPLAY_CLIMATE,    // Climate of plant i.e. temp and humid
+  DISPLAY_SOIL_INFO,  // Soil moisture and water threshold
+  DISPENSE_WATER,     // "Dispensing water..."
+  DISPLAY_HOME        // Plant name, mood i.e. "Good!", "Alright", etc...
+};
 
 // Automatically turn on when power first received
 State machineState = ON;
@@ -63,8 +63,11 @@ static float lastHumid = 0;
 static int currentMoist = 0;
 static int lastMoist = 0;
 
+static int happiness = 100;
+
 // Keep button reading consistent for each loop
-static int currentBtn = ON_BTN_PIN;
+static int currentBtn = 2;
+static int lastBtn = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -76,7 +79,7 @@ void setup() {
   }
 
   // Init moisture sensor
-  pinMode(SOIL_SENS_PIN, INPUT);
+  pinMode(MOIST_SENS_PIN, INPUT);
 
   // Init DHT11 sens
   dht.begin();
@@ -91,16 +94,20 @@ void setup() {
 }
 
 void loop() {
-  handleStateMachine();
+  handleMachineState();
   delay(100);
 }
 
 void handleMachineState() {
   // If machine is on, always check soil/climate, and change LED
-  if (machineState != OFF) {
-    readSoil();
-    readClimate();
-    changeLed();
+  if (machineState != OFF && machineState != ON) {
+    // If 5 seconds have passed since last reading
+    if (readingBuffer()) {
+      readSoil();
+      readClimate();
+      stateAction();
+    }
+    // changeLed();
   }
 
   // If a button is pressed, change state and do something
@@ -115,25 +122,27 @@ void changeState() {
   // if machine state is not off, then allow user functionality
   if (machineState != OFF) {
     switch (currentBtn) {
-      case ON_BTN_PIN:
+      case 2:
         machineState = OFF;
         break;
-      case CLIMATE_BTN_PIN:
+      case 12:
         machineState = DISPLAY_CLIMATE;
         break;
-      case SOIL_BTN_PIN:
+      case 8:
         machineState = DISPLAY_SOIL_INFO;
         break;
-      case HOME_BTN_PIN:
+      case 4:
         machineState = DISPLAY_HOME;
         break;
-      case WATER_BTN_PIN:
-        machineState = DISPENSE_WATER;
+      case 9:
+        if (machineState != DISPENSE_WATER) {
+          machineState = DISPENSE_WATER;
+        }
         break;
     }
   }
   //if machine state is off and on btn pressed, then turn on
-  else if (machineState == OFF && currentBtn == ON_BTN_PIN) {
+  else if (machineState == OFF && currentBtn == 2) {
     machineState = ON;
   }
 }
@@ -145,8 +154,6 @@ void stateAction() {
       break;
     case ON:
       turnOn();
-      machineState = DISPLAY_HOME;
-      home();
       break;
     case DISPLAY_CLIMATE:
       displayClimate();
@@ -161,126 +168,163 @@ void stateAction() {
     case DISPENSE_WATER:
       dispense();  //display message, dispense water, if no soil change "water not dispensed", else "dispense complete"
       machineState = DISPLAY_HOME;
+      currentBtn = 4;
       home();
       break;
   }
 }
 
+void home() {
+  lcd.clear();
+  lcd.setCursor(1, 0);
+  lcd.print("House Plant");
+  lcd.setCursor(0, 1);
+  lcd.print("Feeling Good");
+}
+
 void dispense() {
+  Serial.println("Watering...");
   lcd.clear();
   lcd.home();
   lcd.print("Watering...");
-  delay(3000);
-  lcd.clear();
-  if (readSoil()) {
-    lcd.setCursor(3,0);
+  int reading = 0;
+  // Low moisture
+  if (currentMoist <= 60) {
+    // while low moist
+    while (currentMoist <= 60) {
+      // keep reading soil levels until moist enough
+      readSoil();
+      // if 5 seconds have passed and not watered, print failed and exit loop
+      if (readingBuffer() && currentMoist <= 60) {
+        lcd.clear();
+        Serial.println("Failed to water");
+        lcd.setCursor(0, 0);
+        lcd.print("No water");
+        delay(1000);
+        return;
+      }
+    }
+    lcd.clear();
+    Serial.println("Complete");
+    lcd.setCursor(3, 0);
     lcd.print("Plant");
-    lcd.setCursor(1,1);
+    lcd.setCursor(1, 1);
     lcd.print("Watered!");
-    delay(500);
-  } else {
-    lcd.setCursor(0,0);
-    lcd.print("Can't water");
-    lcd.setCursor(0,1);
-    lcd.print("Fill tank");
+    delay(1000);
   }
+  // if someone pressed the button and not low
+  if (currentMoist >= 60) {
+    lcd.clear();
+    Serial.println("Do not need watering");
+    lcd.setCursor(0, 0);
+    lcd.print("Already full");
+  }
+  delay(1000);
+  machineState = DISPLAY_HOME;
+  home();
 }
 
 // turn off screen w message, change LED to black (do not change led color state)
 void turnOff() {
+  Serial.println("Turning off");
   lcd.clear();
   lcd.setCursor(2, 0);
-  lcd.print("Turning Off...");
+  lcd.println("Turning Off...");
   delay(1000);
-  lcd.noBacklight();
   lcd.clear();
+  lcd.noBacklight();
   lcd.noDisplay();
   fill_solid(leds, NUM_LEDS, CRGB::Black);
   FastLED.show();
 }
 
 void turnOn() {
+  Serial.println("Turning on");
   lcd.backlight();
   lcd.display();
   lcd.clear();
   lcd.setCursor(2, 0);
-  lcd.print("Turning On...");
+  lcd.println("Turning On...");
   fill_solid(leds, NUM_LEDS, CRGB::Green);
   FastLED.show();
   delay(1000);
+  machineState = DISPLAY_HOME;
+  currentBtn = 4;
   home();
 }
 
 void displaySoil() {
-  if (readingBuffer()) {
-    lcd.clear();
-    lcd.setCursor(0, 0);  // set the cursor on the first row and column
-    lcd.print("Moisture: ");
-    lcd.print(moisture);  //print the water content
-    lcd.print("%");
-    lcd.setCursor(0, 1);  //set the cursor on the second row and first column
-    lcd.print("Threshold: ");
-    lcd.print(threshold);  //print the temperature
-    lcd.print("%");
-  }
+  Serial.println("Displaying soil!");
+  lcd.clear();
+  lcd.setCursor(0, 0);  // set the cursor on the first row and column
+  lcd.print("Moisture: ");
+  lcd.print(currentMoist);  //print the water content
+  lcd.print("%");
+  lcd.setCursor(0, 1);  //set the cursor on the second row and first column
+  lcd.print("Threshold: ");
+  lcd.print(MAX_MOIST);  //print the temperature
+  lcd.print("%");
 }
 
 void displayClimate() {
-  if (readingBuffer()) {
-    lcd.clear();
-    lcd.setCursor(0, 0);  // set the cursor on the first row and column
-    lcd.print("Humidity: ");
-    lcd.print(currentHumid);  //print the humidity
-    lcd.print("%");
-    lcd.setCursor(0, 1);  //set the cursor on the second row and first column
-    lcd.print("Temp: ");
-    lcd.print(currentTemp);  //print the temperature
-    lcd.print((char)0b11011111);
-    lcd.print("C");
-  }
+  Serial.println("Displaying climate");
+  lcd.clear();
+  lcd.setCursor(0, 0);  // set the cursor on the first row and column
+  lcd.print("Humidity: ");
+  lcd.print(currentHumid);  //print the humidity
+  lcd.print("%");
+  lcd.setCursor(0, 1);  //set the cursor on the second row and first column
+  lcd.print("Temp: ");
+  lcd.print(currentTemp);  //print the temperature
+  lcd.print((char)0b11011111);
+  lcd.print("C");
 }
 
 void changeLed() {
 
   // Update moist color
   if (currentMoist > MAX_MOIST) {
-    soilColor = CRGB::Purple
+    leds[0] = CRGB::Purple;
+    leds[1] = CRGB::Purple;
   }
   if (currentMoist <= MAX_MOIST && currentMoist > MIN_MOIST) {
-    soilColor = CRGB::Green
+    leds[0] = CRGB::Green;
+    leds[1] = CRGB::Green;
   }
   if (currentMoist < MIN_MOIST) {
-    soilColor = CRGB::Red
+    leds[0] = CRGB::Red;
+    leds[1] = CRGB::Red;
   }
 
   // Update temp color
   if (currentTemp > MAX_TEMP) {
-    tempColor = CRGB::Purple
+    leds[2] = CRGB::Purple;
+    leds[3] = CRGB::Purple;
   }
   if (currentTemp <= MAX_TEMP && currentTemp > MIN_TEMP) {
-    tempColor = CRGB::Green
+    leds[2] = CRGB::Green;
+    leds[3] = CRGB::Green;
   }
   if (currentTemp < MIN_TEMP) {
-    tempColor = CRGB::Red
+    leds[2] = CRGB::Red;
+    leds[3] = CRGB::Red;
   }
 
   // Update humid color
   if (currentHumid > MAX_HUMID) {
-    humidColor = CRGB::Purple
+    leds[4] = CRGB::Purple;
+    leds[5] = CRGB::Purple;
   }
   if (currentHumid <= MAX_HUMID && currentHumid > MIN_HUMID) {
-    humidColor = CRGB::Green
+    leds[4] = CRGB::Green;
+    leds[5] = CRGB::Green;
   }
   if (currentHumid < MIN_HUMID) {
-    humidColor = CRGB::Red
+    leds[4] = CRGB::Red;
+    leds[5] = CRGB::Red;
   }
 
-  leds[0] = soilColor;
-  leds[1] = soilColor;
-  leds[2] = humidColor;
-  leds[3] = humidColor;
-  leds[4] = tempColor;
-  leds[5] = tempColor;
+  // fill_solid(soilLeds, NUM_LEDS, CRGB::Black);
   FastLED.show();
 }
 
@@ -298,6 +342,8 @@ bool readSoil() {
   if (currentMoist != lastMoist) {
     // Update the last moisture readings
     lastMoist = currentMoist;
+    Serial.println("Current moist: ");
+    Serial.println(currentMoist);
     return true;
   }
 
@@ -321,6 +367,10 @@ bool readClimate() {
     // Update the last temperature and humidity readings
     lastHumid = currentHumid;
     lastTemp = currentTemp;
+    Serial.print("Temp: ");
+    Serial.println(currentTemp);
+    Serial.print("Humid: ");
+    Serial.println(currentHumid);
     return true;
   }
 
@@ -370,10 +420,11 @@ bool debounceButton() {
     // Return true only if the button is pressed (reading is HIGH) AND If the current state is different from the last state
     if (reading == HIGH && reading != lastButtonState) {  // is  && reading != lastButtonState needed?
       lastButtonState = reading;
+      Serial.println("Button pressed!");
       return true;
     }
   }
-
+  Serial.println("Waiting...");
   lastButtonState = reading;
   return false;
 }

@@ -1,3 +1,7 @@
+Solenoid valve hookup vid
+https://www.youtube.com/watch?v=ioSYlxHlYdI
+
+
 https://techatronic.com/how-to-make-smart-irrigation-project/
 
 https://arduinogetstarted.com/tutorials/arduino-automatic-irrigation-system
