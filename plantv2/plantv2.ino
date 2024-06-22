@@ -107,7 +107,7 @@ void handleMachineState() {
       readClimate();
       stateAction();
     }
-    // changeLed();
+    changeLed();
   }
 
   // If a button is pressed, change state and do something
@@ -281,50 +281,13 @@ void displayClimate() {
 }
 
 void changeLed() {
-
-  // Update moist color
-  if (currentMoist > MAX_MOIST) {
-    leds[0] = CRGB::Purple;
-    leds[1] = CRGB::Purple;
+  if (currentMoist > MAX_MOIST || currentTemp > MAX_TEMP || currentHumid > MAX_HUMID) {
+    fill_solid(soilLeds, NUM_LEDS, CRGB::Red);
+  } else if (currentMoist < MIN_MOIST || currentTemp < MIN_TEMP || currentHumid < MIN_HUMID) {
+    fill_solid(soilLeds, NUM_LEDS, CRGB::Yellow);
+  } else {
+    fill_solid(soilLeds, NUM_LEDS, CRGB::Green);
   }
-  if (currentMoist <= MAX_MOIST && currentMoist > MIN_MOIST) {
-    leds[0] = CRGB::Green;
-    leds[1] = CRGB::Green;
-  }
-  if (currentMoist < MIN_MOIST) {
-    leds[0] = CRGB::Red;
-    leds[1] = CRGB::Red;
-  }
-
-  // Update temp color
-  if (currentTemp > MAX_TEMP) {
-    leds[2] = CRGB::Purple;
-    leds[3] = CRGB::Purple;
-  }
-  if (currentTemp <= MAX_TEMP && currentTemp > MIN_TEMP) {
-    leds[2] = CRGB::Green;
-    leds[3] = CRGB::Green;
-  }
-  if (currentTemp < MIN_TEMP) {
-    leds[2] = CRGB::Red;
-    leds[3] = CRGB::Red;
-  }
-
-  // Update humid color
-  if (currentHumid > MAX_HUMID) {
-    leds[4] = CRGB::Purple;
-    leds[5] = CRGB::Purple;
-  }
-  if (currentHumid <= MAX_HUMID && currentHumid > MIN_HUMID) {
-    leds[4] = CRGB::Green;
-    leds[5] = CRGB::Green;
-  }
-  if (currentHumid < MIN_HUMID) {
-    leds[4] = CRGB::Red;
-    leds[5] = CRGB::Red;
-  }
-
-  // fill_solid(soilLeds, NUM_LEDS, CRGB::Black);
   FastLED.show();
 }
 
