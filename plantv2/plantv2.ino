@@ -12,10 +12,11 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
+#define currentColor Black  //maybe need to change to CRGB instead of define?
 
 // Button variables
 int ON_BTN_PIN = 2;
-int CLIMATE_BTN_PIN = 12; 
+int CLIMATE_BTN_PIN = 12;
 int SOIL_BTN_PIN = 8;
 int HOME_BTN_PIN = 4;
 int WATER_BTN_PIN = 9;
@@ -42,6 +43,7 @@ enum State {
   DISPLAY_HOME        // Plant name, mood i.e. "Good!", "Alright", etc...
 };
 
+// Automatically turn on when power first received
 State machineState = ON;
 
 // Compare climate differences for debouncing
@@ -58,7 +60,7 @@ void setup() {
 
   lcd.init();
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     pinMode(pins[i], INPUT);
   }
 
@@ -71,7 +73,7 @@ void setup() {
   // Init LED strip and set starting LED state
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
-  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  fill_solid(leds, NUM_LEDS, CRGB::currentColor);
   FastLED.show();
 }
 
@@ -97,7 +99,6 @@ void handleMachineState() {
 
 // Change machine state depending on button press
 void changeState() {
-
   // if machine state is not off, then allow user functionality
   if (machineState != OFF) {
     switch (currentBtn) {
@@ -118,7 +119,6 @@ void changeState() {
         //   break;
     }
   }
-
   //if machine state is off and on btn pressed, then turn on
   else if (machineState == OFF && currentBtn == ON_BTN_PIN) {
     machineState = ON;
@@ -128,15 +128,37 @@ void changeState() {
 void stateAction() {
   switch (machineState) {
     case OFF:
-      turnOffScreen();
+      turnOff();
+      break;
+    case ON:
+      turnOn();
+      break;
+    case DISPLAY_CLIMATE:
+      displayClimate();
+      break;
+    case DISPLAY_SOIL_INFO:
+      displaySoil();
+      break;
+    //display happiness, plant name
+    case DISPLAY_HOME:
+      home();
+      break;
+    case DISPENSE_WATER:
+      dispense(); //display message, dispense water, if no soil change "water not dispensed", else "dispense complete"
+      machineState = DISPLAY_HOME;
+      home();
+      break;
   }
 }
 
-void turnOffScreen() {
-  switch (machineState) {
-    case OFF:
+// turn off screen w message, change LED to black (do not change led color state)
+void turnOff() {
+  //display screen message
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
+  FastLED.show();
+}
 
-  }
+void turnOn() {
 }
 
 // Delay button/state change by .5 seconds to count for button noise, return if any button has been pressed
@@ -146,7 +168,7 @@ bool debounceButton() {
   const unsigned long debounceDelay = 50;  // milliseconds
   int reading = 0;
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     reading = digitalRead(pins[i]);
     if (reading == HIGH) {
       currentBtn = pins[i];
@@ -164,7 +186,7 @@ bool debounceButton() {
   // If debounce delay has passed
   if (elapsedTime >= debounceDelay) {
     // Return true only if the button is pressed (reading is HIGH) AND If the current state is different from the last state
-    if (reading == HIGH && reading != lastButtonState) { // is  && reading != lastButtonState needed?
+    if (reading == HIGH && reading != lastButtonState) {  // is  && reading != lastButtonState needed?
       lastButtonState = reading;
       return true;
     }
