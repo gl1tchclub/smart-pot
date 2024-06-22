@@ -11,7 +11,7 @@ const createPlant = async (req, res) => {
       });
     }
 
-    const { name, daysWater, threshold }
+    // const { name, daysWater, threshold }
 
     await prisma.plant.create({
         data: {

@@ -4,8 +4,8 @@ import express from "express";
 // Import the CORS module
 import cors from "cors";
 
-// Import the index routes module
 import indexRoutes from "./routes/index.js";
+import authRoutes from "./routes/auth.js";
 
 // Create an Express application
 const app = express();
@@ -43,6 +43,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json()); 
 app.use("/api/plants", indexRoutes);
+app.use("/api/auth", authRoutes);
 
 // Start the server on port 3000
 app.listen(PORT, () => {
