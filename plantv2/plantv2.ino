@@ -31,10 +31,10 @@ int pins[] = { ON_BTN_PIN, CLIMATE_BTN_PIN, SOIL_BTN_PIN, HOME_BTN_PIN, WATER_BT
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
-int MIN_TEMP 10;
-int MAX_TEMP 30;
-int MIN_HUMID 30;
-int MAX_HUMID 75;
+float MIN_TEMP 10;
+float MAX_TEMP 30;
+float MIN_HUMID 30;
+float MAX_HUMID 75;
 
 // Moisture sensor variables
 #define MOIST_SENS_PIN A0
@@ -56,8 +56,8 @@ int MAX_MOIST 700
 State machineState = ON;
 
 // Compare climate differences for debouncing
-float currentTemp = 0;
-float currentHumid = 0;
+static float currentTemp = 0;
+static float currentHumid = 0;
 static float lastTemp = 0;
 static float lastHumid = 0;
 static int currentMoist = 0;
@@ -96,17 +96,17 @@ void loop() {
 }
 
 void handleMachineState() {
-  // If a button is pressed, change state and do something
-  if (debounceButton()) {
-    changeState();
-    stateAction();
-  }
-
   // If machine is on, always check soil/climate, and change LED
   if (machineState != OFF) {
     readSoil();
     readClimate();
-    changeLED();
+    changeLed();
+  }
+
+  // If a button is pressed, change state and do something
+  if (debounceButton()) {
+    changeState();
+    stateAction();
   }
 }
 
@@ -127,9 +127,9 @@ void changeState() {
       case HOME_BTN_PIN:
         machineState = DISPLAY_HOME;
         break;
-        // case WATER_BTN_PIN:
-        //   machineState = DISPENSE_WATER;
-        //   break;
+      case WATER_BTN_PIN:
+        machineState = DISPENSE_WATER;
+        break;
     }
   }
   //if machine state is off and on btn pressed, then turn on
@@ -149,7 +149,7 @@ void stateAction() {
       home();
       break;
     case DISPLAY_CLIMATE:
-      readClimate();
+      displayClimate();
       break;
     case DISPLAY_SOIL_INFO:
       displaySoil();
@@ -163,6 +163,26 @@ void stateAction() {
       machineState = DISPLAY_HOME;
       home();
       break;
+  }
+}
+
+void dispense() {
+  lcd.clear();
+  lcd.home();
+  lcd.print("Watering...");
+  delay(3000);
+  lcd.clear();
+  if (readSoil()) {
+    lcd.setCursor(3,0);
+    lcd.print("Plant");
+    lcd.setCursor(1,1);
+    lcd.print("Watered!");
+    delay(500);
+  } else {
+    lcd.setCursor(0,0);
+    lcd.print("Can't water");
+    lcd.setCursor(0,1);
+    lcd.print("Fill tank");
   }
 }
 
@@ -202,7 +222,6 @@ void displaySoil() {
     lcd.print("Threshold: ");
     lcd.print(threshold);  //print the temperature
     lcd.print("%");
-    delay(1000);
   }
 }
 
@@ -218,7 +237,6 @@ void displayClimate() {
     lcd.print(currentTemp);  //print the temperature
     lcd.print((char)0b11011111);
     lcd.print("C");
-    delay(1000);
   }
 }
 
@@ -280,8 +298,6 @@ bool readSoil() {
   if (currentMoist != lastMoist) {
     // Update the last moisture readings
     lastMoist = currentMoist;
-
-
     return true;
   }
 
