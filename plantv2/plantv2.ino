@@ -75,6 +75,10 @@ void setup() {
   FastLED.setBrightness(BRIGHTNESS);
   fill_solid(leds, NUM_LEDS, CRGB::currentColor);
   FastLED.show();
+
+  turnOn();
+  currentColor = Green;
+  changeLed();
 }
 
 void loop() {
@@ -144,7 +148,7 @@ void stateAction() {
       home();
       break;
     case DISPENSE_WATER:
-      dispense(); //display message, dispense water, if no soil change "water not dispensed", else "dispense complete"
+      dispense();  //display message, dispense water, if no soil change "water not dispensed", else "dispense complete"
       machineState = DISPLAY_HOME;
       home();
       break;
@@ -153,12 +157,24 @@ void stateAction() {
 
 // turn off screen w message, change LED to black (do not change led color state)
 void turnOff() {
-  //display screen message
+  lcd.clear();
+  lcd.setCursor(2, 0);
+  lcd.print("Turning Off...");
+  delay(1000);
+  lcd.noBacklight();
+  lcd.clear();
+  lcd.noDisplay();
   fill_solid(leds, NUM_LEDS, CRGB::Black);
   FastLED.show();
 }
 
 void turnOn() {
+  lcd.backlight();
+  lcd.display();
+  lcd.clear();
+  lcd.setCursor(2, 0);
+  lcd.print("Turning On...");
+  delay(1000);
 }
 
 // Delay button/state change by .5 seconds to count for button noise, return if any button has been pressed
