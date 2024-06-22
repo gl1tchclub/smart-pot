@@ -12,7 +12,10 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 #define LED_TYPE WS2812B
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
-#define currentColor Black  //maybe need to change to CRGB instead of define?
+
+#define soilColor CRGB::Green
+#define tempColor CRGB::Green
+#define humidColor CRGB::Green
 
 // Button variables
 int ON_BTN_PIN = 2;
@@ -30,18 +33,19 @@ DHT dht(DHTPIN, DHTTYPE);
 
 // Moisture sensor variables
 #define MOIST_SENS_PIN A0
-#define MOIST_THRESHOLD 530
+int MIN_MOIST 400;
+int MAX_MOIST 700
 
 
-// All possible machine states
-enum State {
-  OFF,
-  ON,
-  DISPLAY_CLIMATE,    // Climate of plant i.e. temp and humid
-  DISPLAY_SOIL_INFO,  // Soil moisture and water threshold
-  DISPENSE_WATER,     // "Dispensing water..."
-  DISPLAY_HOME        // Plant name, mood i.e. "Good!", "Alright", etc...
-};
+  // All possible machine states
+  enum State {
+    OFF,
+    ON,
+    DISPLAY_CLIMATE,    // Climate of plant i.e. temp and humid
+    DISPLAY_SOIL_INFO,  // Soil moisture and water threshold
+    DISPENSE_WATER,     // "Dispensing water..."
+    DISPLAY_HOME        // Plant name, mood i.e. "Good!", "Alright", etc...
+  };
 
 // Automatically turn on when power first received
 State machineState = ON;
@@ -51,6 +55,8 @@ float currentTemp = 0;
 float currentHumid = 0;
 static float lastTemp = 0;
 static float lastHumid = 0;
+static int currentMoist = 0;
+static int lastMoist = 0;
 
 // Keep button reading consistent for each loop
 static int currentBtn = ON_BTN_PIN;
@@ -73,7 +79,7 @@ void setup() {
   // Init LED strip and set starting LED state
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(BRIGHTNESS);
-  fill_solid(leds, NUM_LEDS, CRGB::currentColor);
+  fill_solid(leds, NUM_LEDS, CRGB::Black);
   FastLED.show();
 
   turnOn();
@@ -93,7 +99,7 @@ void handleMachineState() {
 
   // If machine is on, always check soil/climate, and change LED
   if (machineState != OFF) {
-    checkSoil();
+    readSoil();
     readClimate();
     changeLED();
   }
@@ -209,6 +215,46 @@ void displayClimate() {
     lcd.print("C");
     delay(1000);
   }
+}
+
+void changeLed() {
+  leds[0] = soilColor;
+  leds[1] = soilColor;
+  leds[2] = humidColor;
+  leds[3] = humidColor;
+  leds[4] = tempColor;
+  leds[5] = tempColor;
+  FastLED.show();
+}
+
+bool readSoil() {
+  currentMoist = (analogRead(MOIST_SENS_PIN)) / 10;  // read the analog value from sensor and convert
+
+  // Check if readings are valid
+  if (isnan(currentMoist)) {
+    Serial.println("Failed to read from Soil sensor!");
+    lcd.print("Failed");
+    return false;
+  }
+
+  // If the latest reading differs from the previous readings...
+  if (currentMoist != lastMoist) {
+    // Update the last moisture readings
+    lastMoist = currentMoist;
+
+    // Update soil color
+    if (currentMoist > MAX_MOIST) {
+      soilColor = CRGB::Purple
+    }
+    if (currentMoist <= MAX_MOIST && currentMoist > MIN_MOIST) {
+      soilColor = CRGB::Green
+    } else {
+      soilColor = CRGB::Red
+    }
+    return true;
+  }
+
+  return false;
 }
 
 bool readClimate() {
