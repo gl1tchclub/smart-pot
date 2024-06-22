@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon app.js",
-    "mig": "npx prisma migrate dev"
+    "mig": "npx prisma migrate dev",
+    "res": "npx prisma migrate reset --force"
   },
   "type": "module",
   "keywords": [],
