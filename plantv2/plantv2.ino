@@ -5,6 +5,8 @@
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
+const int SOL_PIN = 10;
+
 // Define LED properties
 #define LED_PIN 5
 #define NUM_LEDS 6  // cahnge to 25
@@ -73,6 +75,8 @@ void setup() {
   Serial.begin(9600);
 
   lcd.init();
+
+  pinMode(SOL_PIN, OUTPUT)
 
   for (int i = 0; i < 5; i++) {
     pinMode(pins[i], INPUT);
