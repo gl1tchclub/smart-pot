@@ -1,6 +1,7 @@
 #include <FastLED.h>
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
+#include <avr/wdt.h>
 #include "DHT.h"
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -74,6 +75,7 @@ static int lastBtn = 0;
 
 void setup() {
   Serial.begin(9600);
+  wdt_enable(WDTO_60MS);
 
   lcd.init();
 
@@ -314,6 +316,7 @@ bool readSoil() {
   if (isnan(currentMoist)) {
     Serial.println("Failed to read from Soil sensor!");
     lcd.print("Failed");
+    wdt_reset();
     return false;
   }
 
@@ -338,6 +341,7 @@ bool readClimate() {
   if (isnan(currentTemp) || isnan(currentHumid)) {
     Serial.println("Failed to read from DHT sensor!");
     lcd.print("Failed");
+    wdt_reset();
     return false;
   }
 
