@@ -66,7 +66,6 @@ static int currentMoist = 0;
 static int lastMoist = 0;
 
 static byte happiness = "";
-int homeRow = 0;
 int homeColumn = 0;
 
 // Keep button reading consistent for each loop
@@ -112,7 +111,7 @@ void handleMachineState() {
       readSoil();
       readClimate();
       stateAction();
-      changeLed();
+      changeMood();
     }
   }
 
@@ -193,7 +192,7 @@ void dispense() {
   lcd.clear();
   lcd.home();
   lcd.print("Watering...");
-  fill_solid(soilLeds, NUM_LEDS, CRGB::Blue);
+  fill_solid(leds, NUM_LEDS, CRGB::Blue);
   int reading = 0;
   // Low moisture
   if (currentMoist <= 60) {
@@ -266,13 +265,13 @@ void turnOn() {
 void displaySoil() {
   Serial.println("Displaying soil!");
   lcd.clear();
-  lcd.setCursor(0, 0);  // set the cursor on the first row and column
+  lcd.setCursor(0, 0);
   lcd.print("Moisture: ");
   lcd.print(currentMoist);  //print the water content
   lcd.print("%");
-  lcd.setCursor(0, 1);  //set the cursor on the second row and first column
+  lcd.setCursor(0, 1);
   lcd.print("Threshold: ");
-  lcd.print(MAX_MOIST);  //print the temperature
+  lcd.print(MAX_MOIST);  //print the moisture max
   lcd.print("%");
 }
 
@@ -290,16 +289,20 @@ void displayClimate() {
   lcd.print("C");
 }
 
-void changeLed() {
+void changeMood() {
   if (currentMoist > MAX_MOIST || currentTemp > MAX_TEMP || currentHumid > MAX_HUMID) {
     fill_solid(leds, NUM_LEDS, CRGB::Red);
-    happiness = "Overwhelmed!"
+    happiness = "Overwhelmed!";
+    homeColumn = 1;
   } else if (currentMoist < MIN_MOIST || currentTemp < MIN_TEMP || currentHumid < MIN_HUMID) {
     fill_solid(leds, NUM_LEDS, CRGB::Yellow);
-    happiness = "Feeling dry"
+    happiness = "Feeling dry";
+    homeColumn = 2;
+
   } else {
     fill_solid(leds, NUM_LEDS, CRGB::Green);
-    happiness = "Happy!"
+    happiness = "Happy!";
+    homeColumn = 4;
   }
   FastLED.show();
 }
