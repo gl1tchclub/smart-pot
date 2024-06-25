@@ -65,7 +65,9 @@ static float lastHumid = 0;
 static int currentMoist = 0;
 static int lastMoist = 0;
 
-static int happiness = 100;
+static byte happiness = "";
+int homeRow = 0;
+int homeColumn = 0;
 
 // Keep button reading consistent for each loop
 static int currentBtn = 2;
@@ -76,7 +78,7 @@ void setup() {
 
   lcd.init();
 
-  pinMode(SOL_PIN, OUTPUT)
+  pinMode(SOL_PIN, OUTPUT);
 
   for (int i = 0; i < 5; i++) {
     pinMode(pins[i], INPUT);
@@ -180,10 +182,10 @@ void stateAction() {
 
 void home() {
   lcd.clear();
-  lcd.setCursor(1, 0);
-  lcd.print("House Plant");
-  lcd.setCursor(0, 1);
-  lcd.print("Feeling Good");
+  lcd.setCursor(2, 0);
+  lcd.print("Smart Plant");
+  lcd.setCursor(1, 1);
+  lcd.print(happiness);
 }
 
 void dispense() {
@@ -197,18 +199,21 @@ void dispense() {
   if (currentMoist <= 60) {
     // while low moist
     while (currentMoist <= 60) {
+      digitalWrite(SOL_PIN, HIGH); // Open solenoid
+
       // keep reading soil levels until moist enough
       readSoil();
-      // if 5 seconds have passed and not watered, print failed and exit loop
+      // if 5 seconds have passed and not watered enough, print failed and exit loop
       if (readingBuffer() && currentMoist <= 60) {
         lcd.clear();
         Serial.println("Failed to water");
-        lcd.setCursor(0, 0);
-        lcd.print("No water");
+        lcd.setCursor(2, 0);
+        lcd.print("Cannot water");
         delay(1000);
         return;
       }
     }
+    digitalWrite(SOL_PIN, LOW);
     lcd.clear();
     Serial.println("Complete");
     lcd.setCursor(3, 0);
@@ -249,7 +254,7 @@ void turnOn() {
   lcd.display();
   lcd.clear();
   lcd.setCursor(2, 0);
-  lcd.println("Turning On...");
+  lcd.print("Turning On...");
   fill_solid(leds, NUM_LEDS, CRGB::Green);
   FastLED.show();
   delay(1000);
@@ -287,11 +292,14 @@ void displayClimate() {
 
 void changeLed() {
   if (currentMoist > MAX_MOIST || currentTemp > MAX_TEMP || currentHumid > MAX_HUMID) {
-    fill_solid(soilLeds, NUM_LEDS, CRGB::Red);
+    fill_solid(leds, NUM_LEDS, CRGB::Red);
+    happiness = "Overwhelmed!"
   } else if (currentMoist < MIN_MOIST || currentTemp < MIN_TEMP || currentHumid < MIN_HUMID) {
-    fill_solid(soilLeds, NUM_LEDS, CRGB::Yellow);
+    fill_solid(leds, NUM_LEDS, CRGB::Yellow);
+    happiness = "Feeling dry"
   } else {
-    fill_solid(soilLeds, NUM_LEDS, CRGB::Green);
+    fill_solid(leds, NUM_LEDS, CRGB::Green);
+    happiness = "Happy!"
   }
   FastLED.show();
 }
