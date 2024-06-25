@@ -16,10 +16,6 @@ const int SOL_PIN = 10;
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 
-CRGB soilColor = CRGB::Green;
-CRGB tempColor = CRGB::Green;
-CRGB humidColor = CRGB::Green;
-
 // Button variables
 int ON_BTN_PIN = 2;
 int CLIMATE_BTN_PIN = 12;
@@ -43,6 +39,7 @@ float MAX_HUMID = 75.00;
 #define MOIST_SENS_PIN A0
 int MIN_MOIST = 30;
 int MAX_MOIST = 75;
+bool tankEmpty = false;
 
 
 // All possible machine states
@@ -66,6 +63,7 @@ static float lastHumid = 0;
 static int currentMoist = 0;
 static int lastMoist = 0;
 
+// Plant mood based on climate and water levels
 static byte happiness = "";
 int homeColumn = 0;
 
@@ -75,12 +73,13 @@ static int lastBtn = 0;
 
 void setup() {
   Serial.begin(9600);
-  wdt_enable(WDTO_60MS);
+  wdt_enable(WDTO_60MS);  //Watchdog in case of reading errors
 
   lcd.init();
 
   pinMode(SOL_PIN, OUTPUT);
 
+  // Init each button pin
   for (int i = 0; i < 5; i++) {
     pinMode(pins[i], INPUT);
   }
@@ -102,7 +101,6 @@ void setup() {
 
 void loop() {
   handleMachineState();
-  delay(100);
 }
 
 void handleMachineState() {
@@ -110,7 +108,9 @@ void handleMachineState() {
   if (machineState != OFF && machineState != ON) {
     // If 5 seconds have passed since last reading
     if (readingBuffer()) {
-      readSoil();
+      if (readSoil() && currentMoist <= MIN_MOIST) {
+        dispense();
+      }
       readClimate();
       stateAction();
       changeMood();
@@ -122,6 +122,7 @@ void handleMachineState() {
     changeState();
     stateAction();
   }
+  delay(100);
 }
 
 // Change machine state depending on button press
@@ -154,6 +155,7 @@ void changeState() {
   }
 }
 
+// Calls the corresponding actions depending on machine state
 void stateAction() {
   switch (machineState) {
     case OFF:
@@ -173,7 +175,7 @@ void stateAction() {
       home();
       break;
     case DISPENSE_WATER:
-      dispense();  //display message, dispense water, if no soil change "water not dispensed", else "dispense complete"
+      dispense();
       machineState = DISPLAY_HOME;
       currentBtn = 4;
       home();
@@ -181,6 +183,7 @@ void stateAction() {
   }
 }
 
+// Display basic home screen with project title and plant mood
 void home() {
   lcd.clear();
   lcd.setCursor(2, 0);
@@ -189,31 +192,36 @@ void home() {
   lcd.print(happiness);
 }
 
+// Display message and dispense water. If no soil moisture change detected after 5 seconds then displays "failed to water, please check tank", else "dispense complete"
 void dispense() {
   Serial.println("Watering...");
   lcd.clear();
   lcd.home();
   lcd.print("Watering...");
   fill_solid(leds, NUM_LEDS, CRGB::Blue);
-  int reading = 0;
-  // Low moisture
+
+  // If low water levels detected in soil, attempt to water plant
   if (currentMoist <= 60) {
-    // while low moist
     while (currentMoist <= 60) {
-      digitalWrite(SOL_PIN, HIGH); // Open solenoid
+      digitalWrite(SOL_PIN, HIGH);  // Open solenoid
 
       // keep reading soil levels until moist enough
       readSoil();
+
       // if 5 seconds have passed and not watered enough, print failed and exit loop
       if (readingBuffer() && currentMoist <= 60) {
+        digitalWrite(SOL_PIN, LOW);
         lcd.clear();
         Serial.println("Failed to water");
-        lcd.setCursor(2, 0);
+        lcd.setCursor(1, 0);
         lcd.print("Cannot water");
+        lcd.setCursor(2, 1);
+        lcd.print("Check tank");
         delay(1000);
         return;
       }
     }
+
     digitalWrite(SOL_PIN, LOW);
     lcd.clear();
     Serial.println("Complete");
@@ -223,13 +231,14 @@ void dispense() {
     lcd.print("Watered!");
     delay(1000);
   }
-  // if someone pressed the button and not low
-  if (currentMoist >= 60) {
+  // if someone pressed the button and not low, let them know it doesn't need watering
+  else if (currentMoist >= 60) {
     lcd.clear();
     Serial.println("Do not need watering");
     lcd.setCursor(0, 0);
     lcd.print("Already full");
   }
+
   delay(1000);
   machineState = DISPLAY_HOME;
   home();
@@ -300,6 +309,9 @@ void changeMood() {
     fill_solid(leds, NUM_LEDS, CRGB::Yellow);
     happiness = "Feeling dry";
     homeColumn = 2;
+    if (currentMoist < MIN_MOIST) {
+      dispense();
+    }
 
   } else {
     fill_solid(leds, NUM_LEDS, CRGB::Green);
