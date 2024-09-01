@@ -42,6 +42,30 @@ The water solenoid and relay are not in the wiring diagram as tinkerCAD did not 
 
 ![final diagram](https://github.com/gl1tchclub/smart-pot/blob/9d05f40109e20dcf5d040cecf57edd64e31cd5bf/wiring%20diagrams/5-more-buttons.PNG)
 
+## Final Product
+**Whole Product Setup**
+
+<img width="40%" height="40%" src="https://github.com/user-attachments/assets/9843eb79-f205-417d-8500-b5ebb4b6a5ef" />
+
+**Water Dispensing Setup**
+
+Relay + solenoid
+
+<img width="40%" height="40%" src="https://github.com/user-attachments/assets/6f6de77e-1820-4b7a-b132-2ceba40525ac" />
+
+Tank (funnel) and solenoid with hose attachment
+
+<img width="40%" height="40%" src="https://github.com/user-attachments/assets/2579b0f6-b7af-4a9e-9531-426a38a92236" />
+
+**Design**
+
+Final soldering plan
+
+<img width="40%" height="40%" src="https://github.com/user-attachments/assets/e175877c-dd6f-4677-881b-bde5ca94292b" />
+
+
+
+
 ## Future Scope
 For the next iteration, we hope to continue working on the physical design with a focus on portability and aesthetics while ensuring durability. We also plan to incorporate a water tank with a water level sensor to ensure dispensing does not repeatedly occur when there's no water available.
 
